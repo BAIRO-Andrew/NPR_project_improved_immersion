@@ -72,7 +72,7 @@ Shader "Custom/ToonifyImprovedImmersion"
                                 uv + _MainTex_TexelSize.xy * half2(-1, -1), uv + _MainTex_TexelSize.xy * half2(0, -1), uv + _MainTex_TexelSize.xy * half2(1, -1)};
 
                 
-                /*
+               
                 fixed3 last = (0, 0, 0);
                 fixed3 temp = tex2D(_MainTex, tex7[0]).rgb;
                 [unroll]
@@ -91,8 +91,10 @@ Shader "Custom/ToonifyImprovedImmersion"
 
 
                 return temp;
-                */
+                
 
+
+                /*
                 fixed3 res = (0, 0, 0);
                 [unroll]
                 for(int i = 0; i < 9; i++){
@@ -103,7 +105,42 @@ Shader "Custom/ToonifyImprovedImmersion"
                 res = res / 9;
 
                 return res;
+                */
             }
+
+
+
+            fixed3 GaussianFliter(half2 uv){
+                half2 tex5[25] = {uv + _MainTex_TexelSize.xy * half2(-2, 2), uv + _MainTex_TexelSize.xy * half2(-1, 2), uv + _MainTex_TexelSize.xy * half2(0, 2), uv + _MainTex_TexelSize.xy * half2(1, 2), uv + _MainTex_TexelSize.xy * half2(2, 2), 
+                                uv + _MainTex_TexelSize.xy * half2(-2, 1), uv + _MainTex_TexelSize.xy * half2(-1, 1), uv + _MainTex_TexelSize.xy * half2(0, 1), uv + _MainTex_TexelSize.xy * half2(1, 1), uv + _MainTex_TexelSize.xy * half2(2, 1), 
+                                uv + _MainTex_TexelSize.xy * half2(-2, 0), uv + _MainTex_TexelSize.xy * half2(-1, 0), uv + _MainTex_TexelSize.xy * half2(0, 0), uv + _MainTex_TexelSize.xy * half2(1, 0), uv + _MainTex_TexelSize.xy * half2(2, 0), 
+                                uv + _MainTex_TexelSize.xy * half2(-2, -1), uv + _MainTex_TexelSize.xy * half2(-1, -1), uv + _MainTex_TexelSize.xy * half2(0, -1), uv + _MainTex_TexelSize.xy * half2(1, -1), uv + _MainTex_TexelSize.xy * half2(2, -1), 
+                                uv + _MainTex_TexelSize.xy * half2(-2, -2), uv + _MainTex_TexelSize.xy * half2(-1, -2), uv + _MainTex_TexelSize.xy * half2(0, -2), uv + _MainTex_TexelSize.xy * half2(1, -2), uv + _MainTex_TexelSize.xy * half2(2, -2)};
+                
+                half weight[25] = {0.0030, 0.0133, 0.0219, 0.0133, 0.0030,
+                                   0.0133, 0.0596, 0.0983, 0.0596, 0.0133,
+                                   0.0219, 0.0983, 0.1621, 0.0983, 0.0219, 
+                                   0.0133, 0.0596, 0.0983, 0.0596, 0.0133,
+                                   0.0030, 0.0133, 0.0219, 0.0133, 0.0030};
+
+                fixed3 centerLum = lumiance(tex2D(_MainTex, tex5[12]).rgb);
+                fixed3 res = (0, 0, 0);
+                [unroll]
+                for(int i = 0; i < 25; i++){
+                    //res += tex2D(_MainTex, tex5[i]).rgb * weight[i] * normalize(Sobel(tex5[i]));
+                    
+                    fixed3 temp_color = tex2D(_MainTex, tex5[i]).rgb;
+                    fixed final_weight = weight[i] * (1 - abs(centerLum - lumiance(temp_color)));
+                    res += temp_color * final_weight;
+                    
+                }
+
+                return res;
+            }
+
+
+
+
 
         // color mapping function
             fixed3 ColorMapping(fixed3 color){
@@ -256,6 +293,26 @@ Shader "Custom/ToonifyImprovedImmersion"
             }
 
 
+
+            // this method is used to do the Expansion operation
+            fixed3 edgeExtension(fixed3 cur_col, half2 uv){
+                fixed3 res = cur_col;
+                half2 tex8[8] = {uv + _MainTex_TexelSize.xy * half2(-1, 1), uv + _MainTex_TexelSize.xy * half2(0, 1), uv + _MainTex_TexelSize.xy * half2(1, 1), 
+                                uv + _MainTex_TexelSize.xy * half2(-1, 0), uv + _MainTex_TexelSize.xy * half2(1, 0),
+                                uv + _MainTex_TexelSize.xy * half2(-1, -1), uv + _MainTex_TexelSize.xy * half2(0, -1), uv + _MainTex_TexelSize.xy * half2(1, -1)};
+
+                [unroll]
+                for(int i = 0; i < 8; i++){
+                    fixed3 temp = BilateralFliter(tex8[i]);
+                    fixed index = step(lumiance(res), lumiance(temp));
+                    res = lerp(temp, res, index);
+                }
+
+                return res;
+            }
+
+
+            // this method is used to fill color
             fixed4 ColorProcess(fixed4 color1, fixed4 color2){
                 fixed3 temp_color1 = color1.rgb;
                 fixed3 temp_color2 = color2.rgb;
@@ -280,7 +337,7 @@ Shader "Custom/ToonifyImprovedImmersion"
                 //fixed3 midColor = medianFilter(f.uv);
                 fixed3 color = tex2D(_MainTex, f.uv).rgb;
                 fixed3 temp_color = BilateralFliter(f.uv);
-                fixed3 cal_color = QuantizeColors(medianFilter(f.uv));
+                fixed3 cal_color = QuantizeColors(GaussianFliter(f.uv) * medianFilter(f.uv));
 
 
                 half edge = Sobel(f.uv);
@@ -289,6 +346,10 @@ Shader "Custom/ToonifyImprovedImmersion"
                 fixed4 backgroundColor = fixed4(temp_color, 1);
 
                 fixed4 onlyEdgeColor = lerp(edgeColor, backgroundColor, edge);
+
+
+
+                temp_color = edgeExtension(temp_color, f.uv);
 
                 return ColorProcess(fixed4(temp_color, 1), fixed4(cal_color, 1));
 

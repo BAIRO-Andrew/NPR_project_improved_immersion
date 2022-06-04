@@ -475,7 +475,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gaussianBlurShader: {fileID: 4800000, guid: f46d1472b4d64b146a10959f631d370f, type: 3}
-  para: 0.03
+  para: 0.02
 --- !u!1 &1822022321
 GameObject:
   m_ObjectHideFlags: 0

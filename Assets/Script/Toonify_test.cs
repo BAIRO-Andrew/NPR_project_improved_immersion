@@ -67,7 +67,7 @@ public class Toonify_test : MonoBehaviour
 	*/
 
 	[Range(0.01f, 0.05f)]
-	public float para = 0.03f;
+	public float para = 0.02f;
 
 
 	void OnRenderImage(RenderTexture src, RenderTexture dest)
