@@ -355,14 +355,6 @@ Shader "Custom/ToonifyImprovedImmersion"
 
                 //return fixed4(temp_color, 1);
 
-                //return onlyEdgeColor;
-
-                /*
-                fixed alpha = onlyEdgeColor.a;
-                fixed3 finalColor = ColorCalculation(onlyEdgeColor.rgb);
-
-                return fixed4(finalColor.rgb, alpha);
-                */
             }
             //#pragma enable_d3d11_debug_symbols
 
