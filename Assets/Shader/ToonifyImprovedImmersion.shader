@@ -91,25 +91,11 @@ Shader "Custom/ToonifyImprovedImmersion"
 
 
                 return temp;
-                
-
-
-                /*
-                fixed3 res = (0, 0, 0);
-                [unroll]
-                for(int i = 0; i < 9; i++){
-                    fixed3 temp = tex2D(_MainTex, tex9[i]).rgb;
-                    res += temp;
-                }
-
-                res = res / 9;
-
-                return res;
-                */
+               
             }
 
 
-
+            // guassian fliter function 
             fixed3 GaussianFliter(half2 uv){
                 half2 tex5[25] = {uv + _MainTex_TexelSize.xy * half2(-2, 2), uv + _MainTex_TexelSize.xy * half2(-1, 2), uv + _MainTex_TexelSize.xy * half2(0, 2), uv + _MainTex_TexelSize.xy * half2(1, 2), uv + _MainTex_TexelSize.xy * half2(2, 2), 
                                 uv + _MainTex_TexelSize.xy * half2(-2, 1), uv + _MainTex_TexelSize.xy * half2(-1, 1), uv + _MainTex_TexelSize.xy * half2(0, 1), uv + _MainTex_TexelSize.xy * half2(1, 1), uv + _MainTex_TexelSize.xy * half2(2, 1), 
@@ -142,7 +128,7 @@ Shader "Custom/ToonifyImprovedImmersion"
 
 
 
-        // color mapping function
+            // color mapping function
             fixed3 ColorMapping(fixed3 color){
                 const fixed ColorMap[256] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
                                      0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 0.0941, 
@@ -176,8 +162,6 @@ Shader "Custom/ToonifyImprovedImmersion"
             // quantize color function
             fixed3 QuantizeColors(fixed3 color){
                 return floor(color * 255 / 24) * 24 / 255;
-                //return floor(color * 255 * 0.04166667) * 24 * 0.00392157;
-                //return ColorMapping(color);
             }
 
 
@@ -187,15 +171,6 @@ Shader "Custom/ToonifyImprovedImmersion"
             fixed3 ColorCalculation(fixed3 color){
                 fixed3 finalColor = ColorMapping(color);
             
-                // Brightness
-                //finalColor = finalColor * _Brightness;
-                //finalColor = finalColor * 1.1;
-
-                // Saturation
-                //finalColor = lerp(lumiance(color), finalColor, _Satruation);
-
-                // Constart
-                //finalColor = lerp(fixed3(0.5, 0.5, 0.5), finalColor, _Constart);
             
                 return finalColor;
             }
@@ -240,52 +215,24 @@ Shader "Custom/ToonifyImprovedImmersion"
 
             //bilateral fliter function
             fixed3 BilateralFliter(half2 uv){
-                half2 tex5[25] = {uv + _MainTex_TexelSize.xy * half2(-2, 2), uv + _MainTex_TexelSize.xy * half2(-1, 2), uv + _MainTex_TexelSize.xy * half2(0, 2), uv + _MainTex_TexelSize.xy * half2(1, 2), uv + _MainTex_TexelSize.xy * half2(2, 2), 
-                                uv + _MainTex_TexelSize.xy * half2(-2, 1), uv + _MainTex_TexelSize.xy * half2(-1, 1), uv + _MainTex_TexelSize.xy * half2(0, 1), uv + _MainTex_TexelSize.xy * half2(1, 1), uv + _MainTex_TexelSize.xy * half2(2, 1), 
-                                uv + _MainTex_TexelSize.xy * half2(-2, 0), uv + _MainTex_TexelSize.xy * half2(-1, 0), uv + _MainTex_TexelSize.xy * half2(0, 0), uv + _MainTex_TexelSize.xy * half2(1, 0), uv + _MainTex_TexelSize.xy * half2(2, 0), 
-                                uv + _MainTex_TexelSize.xy * half2(-2, -1), uv + _MainTex_TexelSize.xy * half2(-1, -1), uv + _MainTex_TexelSize.xy * half2(0, -1), uv + _MainTex_TexelSize.xy * half2(1, -1), uv + _MainTex_TexelSize.xy * half2(2, -1), 
-                                uv + _MainTex_TexelSize.xy * half2(-2, -2), uv + _MainTex_TexelSize.xy * half2(-1, -2), uv + _MainTex_TexelSize.xy * half2(0, -2), uv + _MainTex_TexelSize.xy * half2(1, -2), uv + _MainTex_TexelSize.xy * half2(2, -2)};
-                
 
+               // define a list include 9 pixel points suround current point
                 half2 tex9[9] = {uv + _MainTex_TexelSize.xy * half2(-1, 1), uv + _MainTex_TexelSize.xy * half2(0, 1), uv + _MainTex_TexelSize.xy * half2(1, 1), 
                                 uv + _MainTex_TexelSize.xy * half2(-1, 0), uv, uv + _MainTex_TexelSize.xy * half2(1, 0),
                                 uv + _MainTex_TexelSize.xy * half2(-1, -1), uv + _MainTex_TexelSize.xy * half2(0, -1), uv + _MainTex_TexelSize.xy * half2(1, -1)};
 
 
-                /*
-                half weight[25] = {0.0030, 0.0133, 0.0219, 0.0133, 0.0030,
-                                   0.0133, 0.0596, 0.0983, 0.0596, 0.0133,
-                                   0.0219, 0.0983, 0.1621, 0.0983, 0.0219, 
-                                   0.0133, 0.0596, 0.0983, 0.0596, 0.0133,
-                                   0.0030, 0.0133, 0.0219, 0.0133, 0.0030};
-                */
 
-
-                //fixed3 centerLum = lumiance(tex2D(_MainTex, tex5[12]).rgb);
                 fixed3 centerLum = lumiance(tex2D(_MainTex, tex9[4]).rgb);
                 fixed3 res = (0, 0, 0);
-                
-                
-
-                /*
-                [unroll]
-                for(int i = 0; i < 25; i++){
-                    //res += tex2D(_MainTex, tex5[i]).rgb * weight[i] * normalize(Sobel(tex5[i]));
-                    
-                    fixed3 temp_color = tex2D(_MainTex, tex5[i]).rgb;
-                    //fixed final_weight = weight[i] * (1 - abs(centerLum - lumiance(temp_color)));
-                    fixed final_weight = exp(-0.5 * sqrt(abs((tex5[i].x - uv.x) + (tex5[i].y - uv.y)) / 1)) * exp(-0.5 * sqrt(1 - abs(centerLum - lumiance(temp_color)) / 0.05));
-                    res += temp_color * final_weight;
-                    
-                }
-                */
 
                 [unroll]
                 for(int i = 0; i < 9; i++){
                     fixed3 temp_color = tex2D(_MainTex, tex9[i]).rgb;
+                    // using the distance to calculate weight
                     half distance = sqrt(pow(tex9[i].x - uv.x, 2) + pow(tex9[i].y - uv.y, 2));
-                    fixed final_weight = exp(-0.5 * pow(abs(distance) / 0.01, 2)) * exp(-0.5 * sqrt(1 - abs(centerLum - lumiance(temp_color)) / _Para));
-                    //fixed final_weight = weight[i] * (1 - abs(centerLum - lumiance(temp_color)));
+                    // calculate new weight
+                    fixed final_weight = exp(-0.5 * pow(abs(distance) / 0.01, 2)) * exp(-0.5 * sqrt(1 - abs(centerLum - lumiance(temp_color)) / _Para));   
                     res += temp_color * final_weight;
                 }
 
@@ -334,29 +281,21 @@ Shader "Custom/ToonifyImprovedImmersion"
 
             fixed4 frag(v2f f) : SV_Target{
                 
-                //fixed3 midColor = medianFilter(f.uv);
+
                 fixed3 color = tex2D(_MainTex, f.uv).rgb;
-                fixed3 temp_color = BilateralFliter(f.uv);
+                // calculate the edge image color
+                fixed3 edge_color = BilateralFliter(f.uv);
+
+                // calculate the toonify style image color
                 fixed3 cal_color = QuantizeColors(GaussianFliter(f.uv) * medianFilter(f.uv));
 
+                // extansion operation
+                edge_color = edgeExtension(edge_color, f.uv);
 
-                half edge = Sobel(f.uv);
-
-                fixed4 edgeColor = fixed4(0, 0, 0, 1);
-                fixed4 backgroundColor = fixed4(temp_color, 1);
-
-                fixed4 onlyEdgeColor = lerp(edgeColor, backgroundColor, edge);
-
-
-
-                temp_color = edgeExtension(temp_color, f.uv);
-
-                return ColorProcess(fixed4(temp_color, 1), fixed4(cal_color, 1));
-
-                //return fixed4(temp_color, 1);
+                // merge the edge effect and color effect
+                return ColorProcess(fixed4(edge_color, 1), fixed4(cal_color, 1));
 
             }
-            //#pragma enable_d3d11_debug_symbols
 
 
 
